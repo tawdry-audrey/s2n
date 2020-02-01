@@ -76,10 +76,21 @@ TEST_COUNT=`grep -o "stat::number_of_executed_units: [0-9]*" ${TEST_NAME}_output
 TESTS_PER_SEC=`echo $(($TEST_COUNT / $FUZZ_TIMEOUT_SEC))`
 FEATURE_COVERAGE=`grep -o "ft: [0-9]*" ${TEST_NAME}_output.txt | awk '{print $2}' | sort | tail -1`
 
+# Outputs fuzz coverage results if the FUZZ_COVERAGE environment variable is set
+# Coverage is overlayed on source code in ${TEST_NAME}_cov.html, and coverage statistics are available in ${TEST_NAME}_cov.txt
+if [[ -v FUZZ_COVERAGE ]]; then
+    mkdir -p ${COVERAGE_DIR}/fuzz
+    llvm-profdata merge -sparse default.profraw -o ${TEST_NAME}.profdata
+    rm default.profraw
+    llvm-cov show -instr-profile=${TEST_NAME}.profdata ${TEST_NAME} ${FUZZCOV_SOURCES} -use-color -format=html > ${COVERAGE_DIR}/fuzz/${TEST_NAME}_cov.html
+    llvm-cov report -instr-profile=${TEST_NAME}.profdata ${TEST_NAME} ${FUZZCOV_SOURCES} -show-functions > ${COVERAGE_DIR}/fuzz/${TEST_NAME}_cov.txt
+    # TODO: Export coverage as lcov files with LLVM 9+
+fi
+
 if [ $ACTUAL_TEST_FAILURE == $EXPECTED_TEST_FAILURE ];
 then
     printf "\033[32;1mPASSED\033[0m %8d tests, %6d test/sec, %5d features covered" $TEST_COUNT $TESTS_PER_SEC $FEATURE_COVERAGE
-    
+
     if [ $EXPECTED_TEST_FAILURE == 1 ];
     then
         # Clean up LibFuzzer corpus files if the test is negative.
@@ -89,11 +100,11 @@ then
         # TEMP_CORPUS_DIR may contain many new inputs that only covers a small set of new branches. 
         # Instead of copying all new inputs to the corpus directory,  only copy back minimum number of new inputs that reach new branches.
         ./${TEST_NAME} -merge=1 "./corpus/${TEST_NAME}" "${TEMP_CORPUS_DIR}" > ${TEST_NAME}_results.txt 2>&1
-        
+
         # Print number of new files and branches found in new Inputs (if any)
         RESULTS=`grep -Eo "[0-9]+ new files .*$" ${TEST_NAME}_results.txt | tail -1`
         printf ", ${RESULTS}\n"
-       
+
         if [ "$TESTS_PER_SEC" -lt $MIN_TEST_PER_SEC ]; then
             printf "\033[33;1mWARNING!\033[0m ${TEST_NAME} is only ${TESTS_PER_SEC} tests/sec, which is below ${MIN_TEST_PER_SEC}/sec! Fuzz tests are more effective at higher rates.\n\n"
         fi
@@ -103,7 +114,7 @@ then
             exit -1;
         fi
     fi
-    
+
 else
     cat ${TEST_NAME}_output.txt
     printf "\033[31;1mFAILED\033[0m %10d tests, %6d features covered\n" $TEST_COUNT $FEATURE_COVERAGE

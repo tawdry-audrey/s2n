@@ -30,7 +30,6 @@ ifndef FUZZ_TESTS
     export FUZZ_TESTS=${TESTS}
 endif
 
-
 .PHONY : all
 all : run_tests
 
@@ -41,6 +40,11 @@ LIBS += -lm -ltests2n
 
 CFLAGS += -Wno-unreachable-code -O0 -I$(LIBCRYPTO_ROOT)/include/ -I../
 LDFLAGS += $(LIBFUZZER_ROOT)/lib/libFuzzer.a -lstdc++ -L../../lib/ ${CRYPTO_LDFLAGS} -L../testlib/ -ls2n ${LIBS} ${CRYPTO_LIBS} -L../testlib/
+
+ifdef FUZZ_COVERAGe
+    CFLAGS += -fprofile-instr-generate -fcoverage-mapping
+    LDFLAGS += -fprofile-instr-generate
+endif
 
 DYLD_LIBRARY_PATH="../../lib/:../testlib/:$(LIBCRYPTO_ROOT)/lib:$$DYLD_LIBRARY_PATH"
 LD_LIBRARY_PATH="../../lib/:../testlib/:$(LIBCRYPTO_ROOT)/lib:$$LD_LIBRARY_PATH"
