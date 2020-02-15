@@ -447,6 +447,16 @@ int main(int argc, char **argv)
         EXPECT_EQUAL(s2n_conn_get_current_message_type(server_conn), SERVER_CERT);
         S2N_BLOB_EXPECT_EQUAL(server_seq, seq_1);
 
+        /* Server sends EncryptedExtensions */
+        EXPECT_SUCCESS(s2n_handshake_write_io(server_conn));
+        EXPECT_EQUAL(s2n_conn_get_current_message_type(server_conn), SERVER_CERT_VERIFY);
+        S2N_BLOB_EXPECT_EQUAL(server_seq, seq_2);
+
+        /* Server sends EncryptedExtensions */
+        EXPECT_SUCCESS(s2n_handshake_write_io(server_conn));
+        EXPECT_EQUAL(s2n_conn_get_current_message_type(server_conn), SERVER_FINISHED);
+        S2N_BLOB_EXPECT_EQUAL(server_seq, seq_1);
+
         /* Client reads CCS */
         EXPECT_SUCCESS(s2n_handshake_read_io(client_conn));
         EXPECT_EQUAL(s2n_conn_get_current_message_type(client_conn), ENCRYPTED_EXTENSIONS);
@@ -460,31 +470,37 @@ int main(int argc, char **argv)
 
         /* Client reads Encrypted extensions */
         EXPECT_SUCCESS(s2n_handshake_read_io(client_conn));
-        EXPECT_EQUAL(s2n_conn_get_current_message_type(client_conn), ENCRYPTED_EXTENSIONS);
+        EXPECT_EQUAL(s2n_conn_get_current_message_type(client_conn), SERVER_CERT);
 
-        /* TODO add the rest of the handshakes tests
-         * (ServerCert, CertVerify, ServerFinished, ClientFinished)
-         * when respective TLS 1.3 components are done */
+        /* Client reads Server Cert */
+        EXPECT_SUCCESS(s2n_handshake_read_io(client_conn));
+        EXPECT_EQUAL(s2n_conn_get_current_message_type(client_conn), SERVER_CERT_VERIFY);
 
-        /*
-         * // Server sends ServerCert
-         * EXPECT_SUCCESS(s2n_handshake_write_io(server_conn));
-         * EXPECT_EQUAL(s2n_conn_get_current_message_type(server_conn), SERVER_CERT_VERIFY);
-         *
-         * // Server sends CertVerify
-         * EXPECT_SUCCESS(s2n_handshake_write_io(server_conn));
-         * EXPECT_EQUAL(s2n_conn_get_current_message_type(server_conn), SERVER_FINISHED);
-         *
-         * // Server sends ServerFinished
-         * EXPECT_SUCCESS(s2n_handshake_write_io(server_conn));
-         * EXPECT_EQUAL(s2n_conn_get_current_message_type(server_conn), SERVER_FINISHED);
-         *
-         * // Client sends ClientFinished
-         * EXPECT_SUCCESS(s2n_handshake_write_io(client_conn));
-         * EXPECT_EQUAL(s2n_conn_get_current_message_type(client_conn), APPLICATION_DATA);
-         *
-         * // Verify that sequence numbers reset
-         */
+        /* Client reads Server Cert Verify */
+        EXPECT_SUCCESS(s2n_handshake_read_io(client_conn));
+        EXPECT_EQUAL(s2n_conn_get_current_message_type(client_conn), SERVER_FINISHED);
+
+        /* Client reads Server Finished */
+        EXPECT_SUCCESS(s2n_handshake_read_io(client_conn));
+        EXPECT_EQUAL(s2n_conn_get_current_message_type(client_conn), CLIENT_CHANGE_CIPHER_SPEC);
+
+        /* Client sends Client Change Cipher Spec */
+        EXPECT_SUCCESS(s2n_handshake_write_io(client_conn));
+        EXPECT_EQUAL(s2n_conn_get_current_message_type(client_conn), CLIENT_FINISHED);
+
+        /* Client sends ClientFinished */
+        EXPECT_SUCCESS(s2n_handshake_write_io(client_conn));
+        EXPECT_EQUAL(s2n_conn_get_current_message_type(client_conn), APPLICATION_DATA);
+
+        /* Server reads Client Change Cipher Spec */
+        EXPECT_SUCCESS(s2n_handshake_read_io(server_conn));
+        EXPECT_EQUAL(s2n_conn_get_current_message_type(server_conn), CLIENT_FINISHED);
+
+        /* Server reads Client Finished */
+        EXPECT_SUCCESS(s2n_handshake_read_io(server_conn));
+        EXPECT_EQUAL(s2n_conn_get_current_message_type(server_conn), APPLICATION_DATA);
+
+        // Verify that sequence numbers reset
 
         /* Clean up */
         EXPECT_SUCCESS(s2n_stuffer_free(&client_to_server));
