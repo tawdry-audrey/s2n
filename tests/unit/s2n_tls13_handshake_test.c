@@ -450,12 +450,10 @@ int main(int argc, char **argv)
         /* Server sends EncryptedExtensions */
         EXPECT_SUCCESS(s2n_handshake_write_io(server_conn));
         EXPECT_EQUAL(s2n_conn_get_current_message_type(server_conn), SERVER_CERT_VERIFY);
-        S2N_BLOB_EXPECT_EQUAL(server_seq, seq_2);
 
         /* Server sends EncryptedExtensions */
         EXPECT_SUCCESS(s2n_handshake_write_io(server_conn));
         EXPECT_EQUAL(s2n_conn_get_current_message_type(server_conn), SERVER_FINISHED);
-        S2N_BLOB_EXPECT_EQUAL(server_seq, seq_1);
 
         /* Client reads CCS */
         EXPECT_SUCCESS(s2n_handshake_read_io(client_conn));
