@@ -142,7 +142,6 @@ int LLVMFuzzerInitialize(const uint8_t *buf, size_t len)
     /* Set up Server Config */
     server_config = s2n_config_new();
     GUARD(s2n_config_add_cert_chain_and_key(server_config, certificate_chain, private_key));
-
     s2n_pkey_type pkey_type;
     S2N_ERROR_IF(s2n_config_get_num_default_certs(server_config) == 0, S2N_ERR_NUM_DEFAULT_CERTIFICATES);
     struct s2n_cert_chain_and_key *cert = s2n_config_get_single_default_cert(server_config);
@@ -154,13 +153,19 @@ int LLVMFuzzerInitialize(const uint8_t *buf, size_t len)
 
 int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
-    for(int version = 0; version < sizeof(TLS_VERSIONS); version++){
+    /* We need at least one byte of input to set parameters */
+    if (len != 0) {
+
         /* Setup */
         struct s2n_connection *server_conn = s2n_connection_new(S2N_SERVER);
         notnull_check(server_conn);
-        server_conn->actual_protocol_version = TLS_VERSIONS[version];
         GUARD(s2n_stuffer_write_bytes(&server_conn->handshake.io, buf, len));
         server_conn->secure.client_public_key.key.rsa_key.rsa = public_key.key.rsa_key.rsa;
+
+        /* Pull a byte off the libfuzzer input and use it to set parameters */
+        uint8_t randval = 0;
+        GUARD(s2n_stuffer_read_uint8(&server_conn->handshake.io, &randval));
+        server_conn->actual_protocol_version = TLS_VERSIONS[randval % s2n_array_len(TLS_VERSIONS)];
 
         /* Run Test
          * Do not use GUARD macro here since the connection memory hasn't been freed.

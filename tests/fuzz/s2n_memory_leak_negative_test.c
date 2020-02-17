@@ -145,7 +145,7 @@ int LLVMFuzzerInitialize(const uint8_t *buf, size_t len)
 
 int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
-    if(len < S2N_TLS_RECORD_HEADER_LENGTH){
+    if (len < S2N_TLS_RECORD_HEADER_LENGTH) {
         return 0;
     }
 

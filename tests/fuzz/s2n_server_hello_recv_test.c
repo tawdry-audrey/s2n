@@ -51,6 +51,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
     /* We need at least one byte of input to set parameters */
     if (len != 0) {
+
         /* Setup */
         client_config = s2n_config_new();
         struct s2n_connection *client_conn = s2n_connection_new(S2N_CLIENT);

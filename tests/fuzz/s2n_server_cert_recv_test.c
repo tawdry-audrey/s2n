@@ -46,7 +46,8 @@ struct host_verify_data {
     uint8_t callback_invoked;
 };
 
-static uint8_t verify_host_accept_everything(const char *host_name, size_t host_name_len, void *data) {
+static uint8_t verify_host_accept_everything(const char *host_name, size_t host_name_len, void *data)
+{
     struct host_verify_data *verify_data = (struct host_verify_data *) data;
     verify_data->callback_invoked = 1;
     return 1;
@@ -90,8 +91,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
         uint8_t randval = 0;
         GUARD(s2n_stuffer_read_uint8(&conn->handshake.io, &randval));
 
-        if(randval % 2)
-        {
+        if (randval % 2) {
             GUARD(s2n_x509_trust_store_from_ca_file(&trust_store, S2N_DEFAULT_TEST_CERT_CHAIN, NULL));
             GUARD(s2n_connection_set_verify_host_callback(conn, verify_host_accept_everything, &verify_data));
         }
