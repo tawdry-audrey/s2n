@@ -51,7 +51,7 @@ DEFAULT_CFLAGS += -pedantic -Wall -Werror -Wimplicit -Wunused -Wcomment -Wchar-s
 COVERAGE_CFLAGS = -fprofile-arcs -ftest-coverage
 COVERAGE_LDFLAGS = --coverage
 
-FUZZ_CFLAGS = -fsanitize-coverage=trace-pc-guard -fsanitize=address,undefined,leak
+FUZZ_CFLAGS = -fsanitize-coverage=no-prune,trace-pc-guard,trace-cmp,trace-div,trace-gep -fsanitize=address,undefined,leak
 
 # Define FUZZ_COVERAGE - to be used for generating coverage reports on fuzz tests
 #                !!! NOT COMPATIBLE WITH S2N_COVERAGE !!!
