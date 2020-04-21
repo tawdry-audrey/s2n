@@ -101,7 +101,7 @@ CBMCFLAGS += --float-overflow-check
 CBMCFLAGS += --nan-check
 CBMCFLAGS += --pointer-check
 CBMCFLAGS += --pointer-overflow-check
-CBMCFLAGS += --pointer-primitive-check
+#CBMCFLAGS += --pointer-primitive-check
 CBMCFLAGS += --signed-overflow-check
 CBMCFLAGS += --undefined-shift-check
 CBMCFLAGS += --unsigned-overflow-check
@@ -160,6 +160,12 @@ DEFINES += -DAWS_DEEP_CHECKS=$(AWS_DEEP_CHECKS)
 # We override abort() to be assert(0)
 ABSTRACTIONS += $(HELPERDIR)/stubs/abort_override_assert_false.c
 REMOVE_FUNCTION_BODY += --remove-function-body abort
+
+# We override the linux memory management functions to check that the memory is readable
+#ABSTRACTIONS += $(HELPERDIR)/stubs/memory_management_overrides.c
+#REMOVE_FUNCTION_BODY += --remove-function-body munlock
+#REMOVE_FUNCTION_BODY += --remove-function-body mlock
+#REMOVE_FUNCTION_BODY += --remove-function-body madvise
 
 # Users can remove additonal functions using this paramater
 REMOVE_FUNCTION_BODY += $(ADDITIONAL_REMOVE_FUNCTION_BODY)
